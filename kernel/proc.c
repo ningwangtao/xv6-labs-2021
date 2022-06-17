@@ -658,3 +658,15 @@ procdump(void)
     printf("\n");
   }
 }
+
+//add for lab2 sysinfo
+int countproc(){
+  int cnt=0;
+  struct proc *p;
+  for(p=proc;p<&proc[NPROC];p++){
+    acquire(&p->lock);
+    cnt += (p->state != UNUSED);
+    release(&p->lock);
+  }
+  return cnt;
+}

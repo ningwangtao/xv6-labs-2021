@@ -22,3 +22,6 @@
 #define SYS_close  21
 //add trace
 #define SYS_trace  22
+
+// add for lab2 sysinfo
+#define SYS_sysinfo 23

@@ -1,6 +1,9 @@
 struct stat;
 struct rtcdate;
 
+//add sysinfo
+struct sysinfo;
+
 // system calls
 int fork(void);
 int exit(int) __attribute__((noreturn));
@@ -25,6 +28,9 @@ int sleep(int);
 int uptime(void);
 //add trace
 int trace(int);
+
+//add for lab2 sysinfo
+int sysinfo(struct sysinfo *);
 
 // ulib.c
 int stat(const char*, struct stat*);
