@@ -161,17 +161,14 @@ void
 syscall(void)
 {
   int num;
-  int mask;
   struct proc *p = myproc();
 
   num = p->trapframe->a7;
   if(num > 0 && num < NELEM(syscalls) && syscalls[num]) {
     //syscalls[num] is a simple function pointer,push return value to a0 register
     p->trapframe->a0 = syscalls[num]();
-    //get the current process
-    mask = p->trace_mask;
     //check whether the current process needs to be tracked
-    if(((mask>>num)&1) == 1){
+    if(((p->trace_mask>>num)&1) == 1){
       printf("%d: syscall %s -> %d\n",p->pid,syscall_name[num],p->trapframe->a0);
     }
   } else {
