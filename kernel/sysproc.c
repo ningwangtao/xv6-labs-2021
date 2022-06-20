@@ -81,6 +81,33 @@ int
 sys_pgaccess(void)
 {
   // lab pgtbl: your code here.
+  uint64 addr;
+  int len;
+  uint64 abits;
+  int res = 0;
+
+  if(argaddr(0,&addr) < 0){
+    return -1;
+  }
+  if(argint(1,&len) < 0){
+    return -1;
+  }
+  if(argaddr(2,&abits) < 0){
+    return -1;
+  }
+
+  if(len>32 || len<1){
+    return -1;
+  }
+  for(int i=0;i<len;i++){
+    int va = addr + i*PGSIZE;
+    int index = walkAccess(myproc()->pagetable,va);
+    res = res | index << i;
+  }
+  if(copyout(myproc()->pagetable,abits,(char*)&res,sizeof(res)) < 0){
+    return -1;
+  }
+
   return 0;
 }
 #endif

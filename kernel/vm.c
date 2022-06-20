@@ -432,3 +432,42 @@ copyinstr(pagetable_t pagetable, char *dst, uint64 srcva, uint64 max)
     return -1;
   }
 }
+
+const char *levelindex[3] = {"..",".. ..",".. .. .."};
+
+void printfwalk(pagetable_t pagetable,int level){
+  for(int i=0;i<512;i++){
+    pte_t pte = pagetable[i];
+    if(pte & PTE_V){
+      //..0: pte 0x0000000021fda801 pa 0x0000000087f6a000
+      printf("%s%d: pte %p pa %p\n",levelindex[level],i,pte,PTE2PA(pte));
+      if((pte&(PTE_R|PTE_W|PTE_X)) == 0){ // if is not leaf node
+        uint64 child = PTE2PA(pte);
+        printfwalk((pagetable_t)child,level + 1);
+      }
+    }
+  }
+}
+
+void vmprint(pagetable_t pagetable){
+  printf("page table %p\n",pagetable);
+  printfwalk(pagetable,0);
+}
+
+
+//lab3 access
+int walkAccess(pagetable_t pagetable,uint64 va){
+  pte_t* pte;
+  if(va >= MAXVA){
+    return 0;
+  }
+  pte = walk(pagetable,va,0);
+  if(pte == 0){
+    return 0;
+  }
+  if((*pte & PTE_A) != 0){
+    *pte = *pte &(~PTE_A);
+    return 1;
+  }
+  return 0;
+}
