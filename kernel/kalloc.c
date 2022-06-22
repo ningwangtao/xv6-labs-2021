@@ -23,10 +23,20 @@ struct {
   struct run *freelist;
 } kmem;
 
+/**
+ * @brief 
+ * 
+ */
+struct{
+  struct spinlock lock;
+  int cnt[PHYSTOP/PGSIZE];
+}ref;
+
 void
 kinit()
 {
   initlock(&kmem.lock, "kmem");
+  initlock(&ref.lock,"ref");
   freerange(end, (void*)PHYSTOP);
 }
 
@@ -47,6 +57,15 @@ void
 kfree(void *pa)
 {
   struct run *r;
+
+  acquire(&ref.lock);
+  ref.cnt[(uint64)pa/PGSIZE]--;
+  if(ref.cnt[(uint64)pa/PGSIZE] > 0){
+    release(&ref.lock);
+    return;
+  }else{
+    release(&ref.lock);
+  }
 
   if(((uint64)pa % PGSIZE) != 0 || (char*)pa < end || (uint64)pa >= PHYSTOP)
     panic("kfree");
@@ -72,11 +91,40 @@ kalloc(void)
 
   acquire(&kmem.lock);
   r = kmem.freelist;
-  if(r)
+  if(r){
     kmem.freelist = r->next;
+    acquire(&ref.lock);
+    ref.cnt[(uint64)r/PGSIZE] = 1;
+    release(&ref.lock);
+  }
   release(&kmem.lock);
 
   if(r)
     memset((char*)r, 5, PGSIZE); // fill with junk
   return (void*)r;
+}
+
+/**
+ * @brief 
+ * 
+ * @param pa 
+ * @return int 
+ */
+int krefcnt(void* pa){
+  return ref.cnt[(uint64)pa/PGSIZE];
+}
+
+/**
+ * @brief 
+ * 
+ * @param pa 
+ */
+void kaddrefcnt(void* pa){
+  if((uint64)pa % PGSIZE !=0 || (char*)pa < end || (uint64)pa > PHYSTOP){
+    return;
+  }
+  acquire(&ref.lock);
+  ref.cnt[(uint64)pa / PGSIZE]++;
+  release(&ref.lock);
+  return;
 }
